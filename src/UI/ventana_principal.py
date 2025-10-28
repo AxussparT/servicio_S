@@ -6,7 +6,14 @@ from src.conexion import get_conexion
 from tkinter import messagebox
 
 # Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process                         
-# .\.venv\Scripts\Activate                                                                 
+# .\.venv\Scripts\Activate      
+#python -m src.UI.ventana_principal
+#git add .
+#git commit -m "alta de datos y visualizacion en tabla"
+#git push
+
+
+                                                           
 # Asegúrate de que esta importación sea accesible:
 from src.clases.profesor import profesor 
 # Si el código falla, comenta la línea de arriba y la clase 'profesor' si no está definida.
@@ -172,33 +179,37 @@ class VentanaPrincipal:
         frame_derecha=ttk.Frame(frame_contenedor2, borderwidth=0, relief="solid", style='blue.TFrame')
         frame_derecha.pack(side='left',padx=10,anchor='n')
         
-        ttk.Label(frame_izq,text="Nombre",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=10,padx=10)
-        entry_materia_nom=ttk.Entry(frame_izq,width=30,font=("Roboto", 15))
-        entry_materia_nom.pack(pady=10,padx=10)
+        ttk.Label(frame_izq,text="Clave",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
+        self.entry_materia_clave=ttk.Entry(frame_izq,width=30,font=("Roboto", 15))
+        self.entry_materia_clave.pack(pady=4,padx=10)
         
-        ttk.Label(frame_izq,text="Grupo",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=10,padx=10)
-        entry_materia_gru=ttk.Entry(frame_izq,width=30,font=("Roboto", 15))
-        entry_materia_gru.pack(pady=10,padx=10)
+        ttk.Label(frame_izq,text="Nombre",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
+        self.entry_materia_nom=ttk.Entry(frame_izq,width=30,font=("Roboto", 15))
+        self.entry_materia_nom.pack(pady=4,padx=10)
         
-        ttk.Label(frame_izq,text="Profesor",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=10,padx=10)
-        combo_profesor=ttk.Combobox(frame_izq,width=30,font=("Roboto", 15))
-        combo_profesor['values']=("Profesor 1","Profesor 2","Profesor 3")
-        combo_profesor.pack(pady=5,padx=10)
+        ttk.Label(frame_izq,text="Grupo",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
+        self.entry_materia_gru=ttk.Entry(frame_izq,width=30,font=("Roboto", 15))
+        self.entry_materia_gru.pack(pady=4,padx=10)
+        
+        ttk.Label(frame_izq,text="Profesor",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
+        self.combo_profesor=ttk.Combobox(frame_izq,width=30,font=("Roboto", 15))
+        self.combo_profesor['values']=("Profesor 1","Profesor 2","Profesor 3")
+        self.combo_profesor.pack(pady=4,padx=10)
         
         ttk.Label(frame_derecha,text="Horas a la semana",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
-        entry_materia_horas=ttk.Entry(frame_derecha,width=20,font=("Roboto", 15))
-        entry_materia_horas.pack(pady=4,padx=10)
+        self.entry_materia_horas=ttk.Entry(frame_derecha,width=20,font=("Roboto", 15))
+        self.entry_materia_horas.pack(pady=4,padx=10)
         
         ttk.Label(frame_derecha,text="Semestre",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
-        entry_materia_semestre=ttk.Entry(frame_derecha,width=20,font=("Roboto", 15))
-        entry_materia_semestre.pack(pady=4,padx=10)
+        self.entry_materia_semestre=ttk.Entry(frame_derecha,width=20,font=("Roboto", 15))
+        self.entry_materia_semestre.pack(pady=4,padx=10)
         
         ttk.Label(frame_derecha,text="Salón",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
-        combo_salon=ttk.Combobox(frame_derecha,width=20,font=("Roboto", 15))
-        combo_salon['values']=("Salón 1","Salón 2","Salón 3")
-        combo_salon.pack(pady=4,padx=10) 
+        self.combo_salon=ttk.Combobox(frame_derecha,width=20,font=("Roboto", 15))
+        self.combo_salon['values']=("Salón 1","Salón 2","Salón 3")
+        self.combo_salon.pack(pady=4,padx=10) 
         
-        boton_confirmar2=ttk.Button(frame_derecha,text="agregar",command=seleccionar,style='Danger.TButton')
+        boton_confirmar2=ttk.Button(frame_derecha,text="agregar",command=self.evento_materias,style='Danger.TButton')
         boton_confirmar2.pack(pady=4,padx=5,anchor='n')
         
         # Frame para Aulas
@@ -274,6 +285,41 @@ class VentanaPrincipal:
                     cursor.close()
                 if conexion is not None and conexion.is_connected():
                     conexion.close()
+    
+    def evento_materias(self):
+        print("Botón Materias presionado")
+        clave=self.entry_materia_clave.get()
+        nombre=self.entry_materia_nom.get()
+        grupo=self.entry_materia_gru.get()
+        profesor=self.combo_profesor.get()
+        horas=self.entry_materia_horas.get()
+        semestre=self.entry_materia_semestre.get()
+        salon=self.combo_salon.get()
+        print(f"clave: {clave}")
+        print(f"nombre: {nombre}")
+        print(f"grupo: {grupo}")
+        print(f"profesor: {profesor}")
+        print(f"horas a la semana: {horas}")
+        print(f"semestre: {semestre}")
+        print(f"salon: {salon}")
+        
+        try: 
+            from src.clases.materia import materia
+            nueva_materia = materia(
+                clave=clave,
+                nombre=nombre,
+                grupo=grupo,
+                profesor=profesor,
+                horas_semana=horas,
+                semestre=semestre,
+                salon=salon
+            )
+        except NameError:
+            print("ERROR: La clase 'profesor' no está definida o no ha sido importada.")
+
+        
+        
+        
     def evento_boton_profesores(self): 
         print("Botón Profesores presionado")
         
