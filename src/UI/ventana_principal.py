@@ -187,14 +187,14 @@ class VentanaPrincipal:
         self.entry_materia_nom=ttk.Entry(frame_izq,width=30,font=("Roboto", 15))
         self.entry_materia_nom.pack(pady=4,padx=10)
         
-        ttk.Label(frame_izq,text="Grupo",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
+        ''''ttk.Label(frame_izq,text="Grupo",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
         self.entry_materia_gru=ttk.Entry(frame_izq,width=30,font=("Roboto", 15))
         self.entry_materia_gru.pack(pady=4,padx=10)
         
         ttk.Label(frame_izq,text="Profesor",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
         self.combo_profesor=ttk.Combobox(frame_izq,width=30,font=("Roboto", 15))
         self.combo_profesor['values']=("Profesor 1","Profesor 2","Profesor 3")
-        self.combo_profesor.pack(pady=4,padx=10)
+        self.combo_profesor.pack(pady=4,padx=10)'''
         
         ttk.Label(frame_derecha,text="Horas a la semana",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
         self.entry_materia_horas=ttk.Entry(frame_derecha,width=20,font=("Roboto", 15))
@@ -204,18 +204,21 @@ class VentanaPrincipal:
         self.entry_materia_semestre=ttk.Entry(frame_derecha,width=20,font=("Roboto", 15))
         self.entry_materia_semestre.pack(pady=4,padx=10)
         
-        ttk.Label(frame_derecha,text="Salón",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
+        '''ttk.Label(frame_derecha,text="Salón",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
         self.combo_salon=ttk.Combobox(frame_derecha,width=20,font=("Roboto", 15))
         self.combo_salon['values']=("Salón 1","Salón 2","Salón 3")
-        self.combo_salon.pack(pady=4,padx=10) 
+        self.combo_salon.pack(pady=4,padx=10) '''
         
         boton_confirmar2=ttk.Button(frame_derecha,text="agregar",command=self.evento_materias,style='Danger.TButton')
         boton_confirmar2.pack(pady=4,padx=5,anchor='n')
         
+        boton_ventana2=ttk.Button(frame_izq,text="Abrir ventana materias",command=lambda: print("Abrir ventana materias"),style='Danger.TButton')
+        boton_ventana2.pack(pady=4,padx=5,anchor='n')
+        
         # Frame para Aulas
         self.frame_aulas = ttk.Frame(self.master, borderwidth=2, relief="solid", style='blue.TFrame')
         self.frame_aulas.place(x=611, y=394, width=650, height=340)
-        ttk.Label(self.frame_aulas,text="Aulas",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 20)).pack(pady=5,padx=10)
+        ttk.Label(self.frame_aulas,text="Aulas",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 20)).pack(pady=3,padx=10)
         
         frame_contenedor3=ttk.Frame(self.frame_aulas,style='blue.TFrame')
         frame_contenedor3.pack(fill='x',pady=10)
@@ -227,25 +230,32 @@ class VentanaPrincipal:
         frame_der_aulas.pack(side='left',padx=10,anchor='n')
         
         ttk.Label(frame_izq_aulas,text="Número de aula",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=5,padx=10)
-        entry_num_aula=ttk.Entry(frame_izq_aulas,width=30,font=("Roboto", 15))
-        entry_num_aula.pack(pady=5,padx=10)
+        self.entry_num_aula=ttk.Entry(frame_izq_aulas,width=30,font=("Roboto", 15))
+        self.entry_num_aula.pack(pady=2,padx=10)
         
         ttk.Label(frame_der_aulas,text="Capacidad",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=5,padx=10)
-        entry_capacidad_aula=ttk.Entry(frame_der_aulas,width=20,font=("Roboto", 15))
-        entry_capacidad_aula.pack(pady=5,padx=10)
+        self.entry_capacidad_aula=ttk.Entry(frame_der_aulas,width=20,font=("Roboto", 15))
+        self.entry_capacidad_aula.pack(pady=2,padx=10)
         
-        boton_confirmar3=ttk.Button(frame_der_aulas,text="agregar",command=seleccionar,style='Danger.TButton')
+        ttk.Label(frame_izq_aulas,text="Tipo de aula",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=5,padx=10)
+        self.combo_tipo=ttk.Combobox(frame_izq_aulas,width=20,font=("Roboto", 15)) # Atributo público
+        self.combo_tipo['values']=("Normal","tecnológica","laboratorio")
+        self.combo_tipo.pack(pady=2,padx=10)
+        
+        boton_confirmar3=ttk.Button(frame_der_aulas,text="agregar",command=self.evento_Salones,style='Danger.TButton')
         boton_confirmar3.pack(pady=5,padx=5,anchor='n')
         
         self.frame_tabla_aula=ttk.Frame(self.frame_aulas, borderwidth=0, relief="solid", style='blue.TFrame')
         self.frame_tabla_aula.pack(fill='both', expand=True, pady=10, padx=10)
-        columnas=('salon','capacidad')
+        columnas=('salon','capacidad','Tipo')
         self.tabla_aulas=ttk.Treeview(self.frame_tabla_aula, columns=columnas, show='headings')
         self.tabla_aulas.column('salon',anchor='w',width=120)
         self.tabla_aulas.column('capacidad',anchor='w',width=120)
+        self.tabla_aulas.column('Tipo',anchor='w',width=120)
         
         self.tabla_aulas.heading('salon',text='salon')
         self.tabla_aulas.heading('capacidad',text='capacidad')
+        self.tabla_aulas.heading('Tipo',text='Tipo')
         self.tabla_aulas.insert(parent='', index='end', values=('Salón 101', '30'))
         
         scrollbar_vertical=ttk.Scrollbar(self.frame_tabla_aula,orient='vertical',command=self.tabla_aulas.yview)
@@ -260,6 +270,7 @@ class VentanaPrincipal:
     # --- MÉTODOS DE LA CLASE ---
     
     # Este método estaba causando el error. Ahora está fuera de __init__ y usa self correctamente.
+    
     def mostrar_datos_profesor(self):
             for item in self.tabla_profesores.get_children():
                 self.tabla_profesores.delete(item)
@@ -285,34 +296,80 @@ class VentanaPrincipal:
                     cursor.close()
                 if conexion is not None and conexion.is_connected():
                     conexion.close()
+
+    def mostrar_datos_salones(self):
+            for item in self.tabla_aulas.get_children():
+                self.tabla_aulas.delete(item)
+            conexion=None
+            cursor=None
+            try:
+                conexion=get_conexion()
+                if conexion is None:
+                    return []
+                cursor=conexion.cursor()
+                sql_t_salones="SELECT salon_id, capacidad, tipo FROM salones"
+                cursor.execute(sql_t_salones)
+                resultados=cursor.fetchall()
+                
+                if resultados:
+                    for fila in resultados:
+                        self.tabla_aulas.insert('', tk.END, values=fila)
+            except mysql.connector.Error as err:
+                messagebox.showerror("Error",f"Error al obtener los datos de los salones: {err}")
+                return []
+            finally:
+                if cursor is not None:
+                    cursor.close()
+                if conexion is not None and conexion.is_connected():
+                    conexion.close()
     
+    def evento_Salones(self):
+        print("Botón Salones presionado")
+        aula=self.entry_num_aula.get()
+        capacidad=self.entry_capacidad_aula.get()
+        tipo=self.combo_tipo.get()
+        print(f"aula: {aula}")
+        print(f"capacidad: {capacidad}")
+        print(f"tipo: {tipo}")
+        try:
+            from src.clases.salon import salon
+            nuevo_salon = salon(
+                numero_aula=aula,
+                capacidad=capacidad,
+                tipo=tipo
+            )
+            self.mostrar_datos_salones()  # Actualiza la tabla después de agregar un salón
+        except NameError:
+            print("ERROR: La clase 'salon' no está definida o no ha sido importada.")
+    
+        
     def evento_materias(self):
         print("Botón Materias presionado")
         clave=self.entry_materia_clave.get()
         nombre=self.entry_materia_nom.get()
-        grupo=self.entry_materia_gru.get()
-        profesor=self.combo_profesor.get()
+        #grupo=self.entry_materia_gru.get()
+        #profesor=self.combo_profesor.get()
         horas=self.entry_materia_horas.get()
         semestre=self.entry_materia_semestre.get()
-        salon=self.combo_salon.get()
+        #salon=self.combo_salon.get()
         print(f"clave: {clave}")
         print(f"nombre: {nombre}")
-        print(f"grupo: {grupo}")
-        print(f"profesor: {profesor}")
-        print(f"horas a la semana: {horas}")
+        #print(f"grupo: {grupo}")
+        #print(f"profesor: {profesor}")
+        #print(f"horas a la semana: {horas}")
         print(f"semestre: {semestre}")
-        print(f"salon: {salon}")
+        #print(f"salon: {salon}")
         
         try: 
             from src.clases.materia import materia
             nueva_materia = materia(
                 clave=clave,
                 nombre=nombre,
-                grupo=grupo,
-                profesor=profesor,
+                #grupo=grupo,
+                #profesor=profesor,
                 horas_semana=horas,
                 semestre=semestre,
-                salon=salon
+                #salon=salon
             )
         except NameError:
             print("ERROR: La clase 'profesor' no está definida o no ha sido importada.")
@@ -370,4 +427,5 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = VentanaPrincipal(root)
     app.mostrar_datos_profesor()  # Carga inicial de datos en la tabla
+    app.mostrar_datos_salones()  # Carga inicial de datos en la tabla de salones
     root.mainloop()

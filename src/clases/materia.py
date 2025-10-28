@@ -3,14 +3,14 @@ from tkinter import messagebox
 import mysql.connector
 
 class materia:
-    def __init__(self, clave, nombre, grupo, profesor, horas_semana, semestre, salon):
+    def __init__(self, clave, nombre, horas_semana, semestre):
         self.clave = clave
         self.nombre = nombre
-        self.grupo = grupo
-        self.profesor = profesor
+        '''self.grupo = grupo
+        self.profesor = profesor'''
         self.horas_semana = horas_semana
         self.semestre = semestre
-        self.salon = salon
+        #self.salon = salon
         print(f"guardado en el constructor: {self.nombre}")
         
         # Esta línea ya está correcta
