@@ -1,14 +1,17 @@
-import sqlite3
-import os
+import mysql.connector
+from tkinter import messagebox
 
-DB_FILE="data/Dump20251015.bd"
-
-def conectar():
+def get_conexion():
     try:
-        os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
-        conn=sqlite3.connect(DB_FILE)
-        print("Conexion exitosa '{DB_FILE}'")
-        return conn
-    except Exception as e:
-        print(f"Error al conectar a la base de datos: {e}")
+        conexion = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="123456",
+            database="bd_seso",
+            port='3306'
+        )
+        return conexion
+    except mysql.connector.Error as err:
+        messagebox.showerror("Error de Conexión", f"No se pudo conectar a la base de datos: {err}")
         return None
+

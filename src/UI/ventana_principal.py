@@ -1,9 +1,14 @@
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
+import mysql.connector
+from src.conexion import get_conexion
+from tkinter import messagebox
 
+# Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process                         
+# .\.venv\Scripts\Activate                                                                 
 # Asegúrate de que esta importación sea accesible:
-from servicio_S.src.clases.profesor import profesor 
+from src.clases.profesor import profesor 
 # Si el código falla, comenta la línea de arriba y la clase 'profesor' si no está definida.
 
 # --para ejecutar usar python -m servicio_S.src.UI.ventana_principal
@@ -44,7 +49,7 @@ class VentanaPrincipal:
         self.frame_profesores.place(x=140, y=32, width=450, height=700)
         e_profesores=ttk.Label(self.frame_profesores,text="Profesores",background='#0A0F1E',foreground='#ffffff',
                                font=("Roboto", 20), style='fondo.TLabel')
-        e_profesores.pack(pady=5,padx=10)
+        e_profesores.pack(pady=3,padx=10)
         
         # Frame de Datos del Profesor
         frame_contenedor_datos=ttk.Frame(self.frame_profesores,style='blue.TFrame')
@@ -57,24 +62,28 @@ class VentanaPrincipal:
         self.frame_der_datos.pack(side='left',padx=10,anchor='n')
         
         # Entradas de Datos (Todos estos atributos son públicos por usar 'self.')
-        ttk.Label(self.frame_izq_datos,text="Nombre:",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=5,padx=10)
+        ttk.Label(self.frame_izq_datos,text="No. Cuenta",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=3,padx=10)
+        self.entry_no_cuenta=ttk.Entry(self.frame_izq_datos,width=20,font=("Roboto", 15)) # Atributo público
+        self.entry_no_cuenta.pack(pady=3,padx=10)
+        
+        ttk.Label(self.frame_izq_datos,text="Nombre:",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=3,padx=10)  
         self.entry_nombre=ttk.Entry(self.frame_izq_datos,width=20,font=("Roboto", 15)) # Atributo público
-        self.entry_nombre.pack(pady=5,padx=10)
+        self.entry_nombre.pack(pady=3,padx=10)
         
-        ttk.Label(self.frame_izq_datos,text="Apellidos:",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=5,padx=10)
+        ttk.Label(self.frame_izq_datos,text="Apellidos:",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=3,padx=10)
         self.entry_apellido=ttk.Entry(self.frame_izq_datos,width=20,font=("Roboto", 15)) # Atributo público
-        self.entry_apellido.pack(pady=5,padx=10)
+        self.entry_apellido.pack(pady=3,padx=10)
         
-        ttk.Label(self.frame_der_datos,text="¿En línea?:",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=5,padx=10)
+        ttk.Label(self.frame_der_datos,text="¿En línea?:",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=3,padx=10)
         self.combo_linea=ttk.Combobox(self.frame_der_datos,width=20,font=("Roboto", 15)) # Atributo público
         self.combo_linea['values']=("Sí","No")
-        self.combo_linea.pack(pady=5,padx=10)
+        self.combo_linea.pack(pady=3,padx=10)
         
-        ttk.Label(self.frame_der_datos,text="Horario:",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=5,padx=10)
+        ttk.Label(self.frame_der_datos,text="Horario:",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=3,padx=10)
         self.entry_horario_i=ttk.Entry(self.frame_der_datos,width=20,font=("Roboto", 15)) # Atributo público
-        self.entry_horario_i.pack(pady=5,padx=10)
+        self.entry_horario_i.pack(pady=3,padx=10)
         self.entry_horario_f=ttk.Entry(self.frame_der_datos,width=20,font=("Roboto", 15)) # Atributo público
-        self.entry_horario_f.pack(pady=5,padx=10)
+        self.entry_horario_f.pack(pady=3,padx=10)
         
         # Checkbuttons de días de semana
         frame_contenedor=ttk.Frame(self.frame_profesores,style='blue.TFrame')
@@ -122,13 +131,15 @@ class VentanaPrincipal:
         # --- TABLA DE PROFESORES ---
         self.frame_tablas=ttk.Frame(self.frame_profesores, borderwidth=0, relief="solid", style='blue.TFrame')
         self.frame_tablas.pack(pady=10,padx=10)
-        columnas=('Profesor','Dias','Horario','¿en linea?')
+        columnas=('Cuenta','Profesor','Dias','Horario','¿en linea?')
         self.tabla_profesores=ttk.Treeview(self.frame_tablas, columns=columnas, show='headings')
+        self.tabla_profesores.column('Cuenta',anchor='w',width=120)
         self.tabla_profesores.column('Profesor',anchor='w',width=120)
         self.tabla_profesores.column('Dias',anchor='w',width=120)
         self.tabla_profesores.column('Horario',anchor='w',width=120)
         self.tabla_profesores.column('¿en linea?',anchor='w',width=120)
         
+        self.tabla_profesores.heading('Cuenta',text='Cuenta')
         self.tabla_profesores.heading('Profesor',text='Profesor')
         self.tabla_profesores.heading('Dias',text='Dias')
         self.tabla_profesores.heading('Horario',text='Horario')
@@ -142,6 +153,7 @@ class VentanaPrincipal:
         self.tabla_profesores.configure(xscroll=scrollbar_horizontal.set)
         scrollbar_horizontal.pack(side='bottom',fill='x')
         self.tabla_profesores.pack()
+        #---MOSTRAR DATOS DEL PROFE EN LA TABLA
         
         # --- PRUEBA Y DEMÁS SECCIONES (MATERIAS Y AULAS) ---
         ttk.Label(self.frame_tablas,text="Apellidos:",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=10,padx=10)
@@ -237,26 +249,54 @@ class VentanaPrincipal:
     # --- MÉTODOS DE LA CLASE ---
     
     # Este método estaba causando el error. Ahora está fuera de __init__ y usa self correctamente.
+    def mostrar_datos_profesor(self):
+            for item in self.tabla_profesores.get_children():
+                self.tabla_profesores.delete(item)
+            conexion=None
+            cursor=None
+            try:
+                conexion=get_conexion()
+                if conexion is None:
+                    return []
+                cursor=conexion.cursor()
+                sql_t_profesores="SELECT profesor_id,nombre,dias_disponibles,CONCAT(disponible_inicio,'-',disponible_fin) AS HORARIO,en_linea FROM profesores"
+                cursor.execute(sql_t_profesores)
+                resultados=cursor.fetchall()
+                
+                if resultados:
+                    for fila in resultados:
+                        self.tabla_profesores.insert('', tk.END, values=fila)
+            except mysql.connector.Error as err:
+                messagebox.showerror("Error",f"Error al obtener los datos de los profesores: {err}")
+                return []
+            finally:
+                if cursor is not None:
+                    cursor.close()
+                if conexion is not None and conexion.is_connected():
+                    conexion.close()
     def evento_boton_profesores(self): 
         print("Botón Profesores presionado")
         
         # Accediendo a los widgets, que son públicos (usando self.)
+        cuenta=self.entry_no_cuenta.get()
         nombre=self.entry_nombre.get()
         apellido=self.entry_apellido.get()
         en_linea=self.combo_linea.get()
         horario_inicio=self.entry_horario_i.get()
         horario_fin= self.entry_horario_f.get()
         
+        
 
         # aun no se obtiene los valores de los dias por la mientras se usara esto
         dias_seleccionados = "Lunes, Martes"
+        nombre_completo= f"{nombre} {apellido}"
         
         # 2. Llamar al constructor de la clase 'profesor'
     #    Asegúrate de haber importado la clase 'profesor'
         try:
             nuevo_profesor = profesor(
-                nombre=nombre,
-                apellido=apellido,
+                cuenta=cuenta,
+                nombre_completo=nombre_completo,
                 dias=dias_seleccionados, 
                 hora_entrada=horario_inicio,
                 hora_salida=horario_fin,
@@ -266,10 +306,11 @@ class VentanaPrincipal:
         except NameError:
             print("ERROR: La clase 'profesor' no está definida o no ha sido importada.")
 
-        print(f"nombre: {nombre}")
+        print(f"nombre: {nombre_completo}")
         print(f"apellido: {apellido}")
         print(f"en linea: {en_linea}")
         print(f"horario: de {horario_inicio} a {horario_fin}")
+        self.mostrar_datos_profesor()  # Actualiza la tabla después de agregar un profesor
         
     def redimensionar_fondo(self, event):
         # Redimensiona la imagen al tamaño de la ventana
@@ -282,4 +323,5 @@ class VentanaPrincipal:
 if __name__ == "__main__":
     root = tk.Tk()
     app = VentanaPrincipal(root)
+    app.mostrar_datos_profesor()  # Carga inicial de datos en la tabla
     root.mainloop()
