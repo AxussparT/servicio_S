@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 import mysql.connector
 from src.conexion import get_conexion
 from tkinter import messagebox
+from src.UI.ventana_gestion import VentanaGestion
 
 # Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process                         
 # .\.venv\Scripts\Activate      
@@ -212,7 +213,7 @@ class VentanaPrincipal:
         boton_confirmar2=ttk.Button(frame_derecha,text="agregar",command=self.evento_materias,style='Danger.TButton')
         boton_confirmar2.pack(pady=4,padx=5,anchor='n')
         
-        boton_ventana2=ttk.Button(frame_izq,text="Abrir ventana materias",command=lambda: print("Abrir ventana materias"),style='Danger.TButton')
+        boton_ventana2=ttk.Button(frame_izq,text="Abrir ventana materias",command=self.abrir_ventana_gestion,style='Danger.TButton')
         boton_ventana2.pack(pady=4,padx=5,anchor='n')
         
         # Frame para Aulas
@@ -270,7 +271,12 @@ class VentanaPrincipal:
     # --- MÉTODOS DE LA CLASE ---
     
     # Este método estaba causando el error. Ahora está fuera de __init__ y usa self correctamente.
-    
+    def abrir_ventana_gestion(self):
+        try:
+            VentanaGestion(self.master)
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo abrir la ventana de gestión: {e}")
+            
     def mostrar_datos_profesor(self):
             for item in self.tabla_profesores.get_children():
                 self.tabla_profesores.delete(item)
