@@ -27,14 +27,14 @@ def validar_y_registrar_profesor(cuenta, nombre_completo, dias, hora_entrada, ho
 
         cursor = conexion.cursor()
         
-        # 1. VERIFICAR si el profesor ya está registrado
-        sql_check = "SELECT en_linea FROM profesores WHERE profesor_id = %s"
+        sql_check = "SELECT en_linea, dias_disponibles FROM profesores WHERE profesor_id = %s"
         cursor.execute(sql_check, (cuenta,))
         resultado = cursor.fetchone()
         
         
         if resultado:
             en_linea_db = resultado[0]
+            dias_db = resultado[1] 
             esta_en_linea_db = (en_linea_db == 'SI') 
             
             sql_update_base = """
@@ -42,16 +42,15 @@ def validar_y_registrar_profesor(cuenta, nombre_completo, dias, hora_entrada, ho
                 SET disponible_inicio = %s,
                     disponible_fin = %s,
                     dias_disponibles = %s,
-                    en_linea = %s  /* Enviamos 'SI' o 'NO' */
+                    en_linea = %s
                 WHERE profesor_id = %s
             """
             
             estado_actual = "Línea/Presencial" if esta_en_linea_db else "Solo Presencial"
             estado_nuevo = "Línea/Presencial" if esta_en_linea_nuevo else "Solo Presencial"
 
-
             # -----------------------------------------------------------
-            # CASO A: Ya estaba En Línea (TRUE)
+            # CASO A
             # -----------------------------------------------------------
             if esta_en_linea_db:
                 
@@ -59,7 +58,7 @@ def validar_y_registrar_profesor(cuenta, nombre_completo, dias, hora_entrada, ho
                     messagebox.showwarning("Advertencia", 
                         f"El profesor con cuenta '{cuenta}' ya estaba como **{estado_actual}**.\nSe actualizarán días, horas y disponibilidad. (Queda: **{estado_nuevo}**)."
                     )
-                    valores_update = (hora_entrada, hora_salida, dias, 'SI', cuenta)
+                    valores_update = (hora_entrada, hora_salida, dias, 'SI', cuenta) 
                     
                 else: 
                     messagebox.showinfo("Actualización", 
@@ -74,7 +73,7 @@ def validar_y_registrar_profesor(cuenta, nombre_completo, dias, hora_entrada, ho
 
 
             # -----------------------------------------------------------
-            # CASO B: Ya estaba Presencial (FALSE)
+            # CASO B
             # -----------------------------------------------------------
             elif not esta_en_linea_db:
                 
@@ -82,7 +81,7 @@ def validar_y_registrar_profesor(cuenta, nombre_completo, dias, hora_entrada, ho
                     messagebox.showinfo("Actualización", 
                         f"El profesor '{cuenta}' ya está en formato **{estado_actual}**.\nSe actualizará a disponible en **{estado_nuevo}** y se reemplazarán los datos."
                     )
-                    valores_update = (hora_entrada, hora_salida, dias, 'SI', cuenta)
+                    valores_update = (hora_entrada, hora_salida, dias, 'SI', cuenta) 
                     
                     cursor.execute(sql_update_base, valores_update)
                     
@@ -94,16 +93,16 @@ def validar_y_registrar_profesor(cuenta, nombre_completo, dias, hora_entrada, ho
                     messagebox.showwarning("Actualización", 
                         f"El profesor con cuenta '{cuenta}' ya está registrado en formato **{estado_actual}**.\nSe **actualizarán** los días y horarios con los nuevos valores. (Queda: **{estado_nuevo}**)."
                     )
-                    valores_update = (hora_entrada, hora_salida, dias, 'NO', cuenta)
+                    valores_update = (hora_entrada, hora_salida, dias, 'NO', cuenta) 
                     cursor.execute(sql_update_base, valores_update)
                     
                     messagebox.showinfo("Actualización Exitosa", f"Profesor '{cuenta}' **Actualizado**. Días y horarios reemplazados. (Sigue: Solo Presencial).")
                     transaccion_exitosa = True
                     return True
-        
-        # -----------------------------------------------------------
-        # CASO C: El profesor NO existe (Alta nueva)
-        # -----------------------------------------------------------
+            
+            # -----------------------------------------------------------
+            # CASO C: El profesor NO existe (Alta nueva)
+            # -----------------------------------------------------------
         else:
             sql_insert = "INSERT INTO profesores (profesor_id, nombre, disponible_inicio, disponible_fin, dias_disponibles, en_linea) VALUES (%s, %s, %s, %s, %s, %s)"
             valores_insert = (cuenta, nombre_completo, hora_entrada, hora_salida, dias, linea_para_bd_enum)

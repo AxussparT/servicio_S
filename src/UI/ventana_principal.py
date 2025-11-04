@@ -6,15 +6,6 @@ from src.conexion import get_conexion
 from tkinter import messagebox
 from src.UI.ventana_gestion import VentanaGestion
 
-# Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process                         
-# .\.venv\Scripts\Activate      
-#python -m src.UI.ventana_principal
-#git add .
-#git commit -m "alta de datos y visualizacion en tabla"
-#git push
-
-
-                                                           
 # Asegúrate de que esta importación sea accesible:
 from src.clases.profesor import profesor 
 # Si el código falla, comenta la línea de arriba y la clase 'profesor' si no está definida.
@@ -26,7 +17,7 @@ class VentanaPrincipal:
     def __init__(self, master):
         self.master = master
         self.master.title("PLASEM")
-        self.master.state('zoomed')  # Maximiza la ventana al iniciar
+        self.master.state('zoomed') 
         db_path = "data/PLASEM.db"
         
         # --- ESTILOS ---
@@ -74,7 +65,7 @@ class VentanaPrincipal:
         self.entry_no_cuenta=ttk.Entry(self.frame_izq_datos,width=20,font=("Roboto", 15)) # Atributo público
         self.entry_no_cuenta.pack(pady=3,padx=10)
         
-        ttk.Label(self.frame_izq_datos,text="Nombre:",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=3,padx=10)  
+        ttk.Label(self.frame_izq_datos,text="Nombre:",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=3,padx=10) 
         self.entry_nombre=ttk.Entry(self.frame_izq_datos,width=20,font=("Roboto", 15)) # Atributo público
         self.entry_nombre.pack(pady=3,padx=10)
         
@@ -103,33 +94,25 @@ class VentanaPrincipal:
         frame_confirmar=ttk.Frame(frame_contenedor, borderwidth=0, relief="solid", style='blue.TFrame')
         frame_confirmar.pack(side='left',padx=10,anchor='n')
         
-        # Función local para los Checkbuttons (Esta sí funciona aquí porque no usa self)
-        def seleccionar():
-            seleccion = []
-            if var_lunes.get(): seleccion.append("Lunes")
-            if var_martes.get(): seleccion.append("Martes")
-            if var_miercoles.get(): seleccion.append("Miércoles")
-            if var_jueves.get(): seleccion.append("Jueves")
-            if var_viernes.get(): seleccion.append("Viernes")
-            if var_sabado.get(): seleccion.append("Sábado")
-            print("Días seleccionados:", ", ".join(seleccion))
-            
-        var_lunes = tk.IntVar()
-        var_martes = tk.IntVar()
-        var_miercoles = tk.IntVar()
-        var_jueves = tk.IntVar()
-        var_viernes = tk.IntVar()
-        var_sabado = tk.IntVar()
+        # CORRECCIÓN 1: Definir las variables como atributos de la clase (self.)
+        self.var_lunes = tk.IntVar()
+        self.var_martes = tk.IntVar()
+        self.var_miercoles = tk.IntVar()
+        self.var_jueves = tk.IntVar()
+        self.var_viernes = tk.IntVar()
+        self.var_sabado = tk.IntVar()
+
+        # La función seleccionar original solo hacía 'print', por lo que no es necesaria
+        # como 'command' del checkbutton. El estado se lee al presionar "Confirmar".
         
-        ttk.Checkbutton(frame_dias, text="Lunes", variable=var_lunes, command=seleccionar, style='Custom.TCheckbutton').pack(pady=5,padx=5,anchor='w')
-        ttk.Checkbutton(frame_dias, text="Martes", variable=var_martes, command=seleccionar, style='Custom.TCheckbutton').pack(pady=5,padx=5,anchor='w')
-        ttk.Checkbutton(frame_dias, text="Miércoles", variable=var_miercoles, command=seleccionar, style='Custom.TCheckbutton').pack(pady=5,padx=5,anchor='w')
-        ttk.Checkbutton(frame_dias, text="Jueves", variable=var_jueves, command=seleccionar, style='Custom.TCheckbutton').pack(pady=5,padx=5,anchor='w')
-        ttk.Checkbutton(frame_dias, text="Viernes", variable=var_viernes, command=seleccionar, style='Custom.TCheckbutton').pack(pady=5,padx=5, anchor='w')
-        ttk.Checkbutton(frame_dias, text="Sábado", variable=var_sabado, command=seleccionar, style='Custom.TCheckbutton').pack(pady=5,padx=5, anchor='w')
+        ttk.Checkbutton(frame_dias, text="Lunes", variable=self.var_lunes, style='Custom.TCheckbutton').pack(pady=5,padx=5,anchor='w')
+        ttk.Checkbutton(frame_dias, text="Martes", variable=self.var_martes, style='Custom.TCheckbutton').pack(pady=5,padx=5,anchor='w')
+        ttk.Checkbutton(frame_dias, text="Miércoles", variable=self.var_miercoles, style='Custom.TCheckbutton').pack(pady=5,padx=5,anchor='w')
+        ttk.Checkbutton(frame_dias, text="Jueves", variable=self.var_jueves, style='Custom.TCheckbutton').pack(pady=5,padx=5,anchor='w')
+        ttk.Checkbutton(frame_dias, text="Viernes", variable=self.var_viernes, style='Custom.TCheckbutton').pack(pady=5,padx=5, anchor='w')
+        ttk.Checkbutton(frame_dias, text="Sábado", variable=self.var_sabado, style='Custom.TCheckbutton').pack(pady=5,padx=5, anchor='w')
         
         # --- BOTÓN CORREGIDO ---
-        # Ahora el command llama a self.evento_boton_profesores (el nuevo método de la clase)
         boton_confirmar=ttk.Button(frame_confirmar,text="Confirmar",command=self.evento_boton_profesores,style='Danger.TButton')
         boton_confirmar.pack(pady=5,padx=5,anchor='n')
         
@@ -188,7 +171,7 @@ class VentanaPrincipal:
         self.entry_materia_nom=ttk.Entry(frame_izq,width=30,font=("Roboto", 15))
         self.entry_materia_nom.pack(pady=4,padx=10)
         
-        ''''ttk.Label(frame_izq,text="Grupo",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
+        '''ttk.Label(frame_izq,text="Grupo",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=4,padx=10)
         self.entry_materia_gru=ttk.Entry(frame_izq,width=30,font=("Roboto", 15))
         self.entry_materia_gru.pack(pady=4,padx=10)
         
@@ -344,7 +327,7 @@ class VentanaPrincipal:
                 capacidad=capacidad,
                 tipo=tipo
             )
-            self.mostrar_datos_salones()  # Actualiza la tabla después de agregar un salón
+            self.mostrar_datos_salones() 
         except NameError:
             print("ERROR: La clase 'salon' no está definida o no ha sido importada.")
     
@@ -394,19 +377,35 @@ class VentanaPrincipal:
         horario_inicio=self.entry_horario_i.get()
         horario_fin= self.entry_horario_f.get()
         
-        
+        # -------------------------------------------------------------
+        # CORRECCIÓN 2: Obtener los días seleccionados de los Checkbuttons
+        # -------------------------------------------------------------
+        dias_semana = {
+            "Lunes": self.var_lunes.get(),
+            "Martes": self.var_martes.get(),
+            "Miércoles": self.var_miercoles.get(),
+            "Jueves": self.var_jueves.get(),
+            "Viernes": self.var_viernes.get(),
+            "Sábado": self.var_sabado.get()
+        }
 
-        # aun no se obtiene los valores de los dias por la mientras se usara esto
-        dias_seleccionados = "Lunes, Martes"
+        dias_seleccionados = []
+        for dia, valor in dias_semana.items():
+            if valor == 1: # 1 significa que la casilla está marcada
+                dias_seleccionados.append(dia)
+        
+        # Convertir la lista de días seleccionados en una cadena separada por comas
+        dias_str = ", ".join(dias_seleccionados)
+        # -------------------------------------------------------------
+        
         nombre_completo= f"{nombre} {apellido}"
         
         # 2. Llamar al constructor de la clase 'profesor'
-    #    Asegúrate de haber importado la clase 'profesor'
         try:
             nuevo_profesor = profesor(
                 cuenta=cuenta,
                 nombre_completo=nombre_completo,
-                dias=dias_seleccionados, 
+                dias=dias_str, # <--- ¡USANDO LA CADENA DINÁMICA!
                 hora_entrada=horario_inicio,
                 hora_salida=horario_fin,
                 linea=en_linea
@@ -419,7 +418,7 @@ class VentanaPrincipal:
         print(f"apellido: {apellido}")
         print(f"en linea: {en_linea}")
         print(f"horario: de {horario_inicio} a {horario_fin}")
-        self.mostrar_datos_profesor()  # Actualiza la tabla después de agregar un profesor
+        self.mostrar_datos_profesor() # Actualiza la tabla después de agregar un profesor
         
     def redimensionar_fondo(self, event):
         # Redimensiona la imagen al tamaño de la ventana
@@ -432,6 +431,7 @@ class VentanaPrincipal:
 if __name__ == "__main__":
     root = tk.Tk()
     app = VentanaPrincipal(root)
-    app.mostrar_datos_profesor()  # Carga inicial de datos en la tabla
-    app.mostrar_datos_salones()  # Carga inicial de datos en la tabla de salones
+    app.mostrar_datos_profesor() 
+    app.mostrar_datos_salones()
     root.mainloop()
+    
