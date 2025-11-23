@@ -1,19 +1,25 @@
 from src.conexion import get_conexion
-from tkinter import messagebox 
+from tkinter import messagebox
 import mysql.connector
-
-# --- 1. FUNCIÓN DE LÓGICA DE NEGOCIO (Validación y DB) ---
 
 def validar_y_registrar_materia(clave, nombre, horas_semana, semestre):
     """
-    Función que maneja la lógica de negocio (validación, INSERT y UPDATE)
-    para el registro de materias.
+    Función que maneja la lógica de validación, INSERT y UPDATE para materias.
     """
-    print(f"Iniciando validación y registro para la materia: {clave} - {nombre}...")
+    print(f"Iniciando registro/actualización para: {clave} - {nombre}...")
     conexion = None 
     cursor = None
     transaccion_exitosa = False
 
+    # Prepara y limpia las variables de entrada
+    clave = str(clave).strip()
+    nombre = str(nombre).strip()
+    horas_semana_str = str(horas_semana).strip()
+    
+    # Asigna el ID del semestre o None si el valor no es un dígito
+    semestre_id = int(semestre) if str(semestre).strip().isdigit() else None
+    
+    # Validación simple de campos obligatorios
     if not clave or not nombre:
         messagebox.showerror("Error de Datos", "La clave y el nombre de la materia no pueden estar vacíos.")
         return False
@@ -26,101 +32,71 @@ def validar_y_registrar_materia(clave, nombre, horas_semana, semestre):
 
         cursor = conexion.cursor()
         
+        # 1. BÚSQUEDA: Verificar si la materia ya existe usando la clave
         sql_check = "SELECT nombre FROM materias WHERE materia_id = %s"
         cursor.execute(sql_check, (clave,))
         resultado = cursor.fetchone()
         
         if resultado:
-            # --- Caso: La materia YA existe (Petición de Confirmación) ---
+            # --- Materia YA existe: Preguntar para actualizar ---
             nombre_db = resultado[0]
             
             mensaje_confirmacion = (
-                f"La materia con clave '{clave}' (**{nombre_db}**) ya está registrada.\n\n"
-                f"¿Desea actualizarla con los nuevos datos)?"
+                f"La materia con clave '{clave}' ({nombre_db}) ya está registrada.\n\n"
+                f"¿Desea actualizarla con los nuevos datos?"
             )
             
-            #Preguntar al usuario si desea actualizar
-            confirmar = messagebox.askyesno("Materia Existente", mensaje_confirmacion)
-            
-            if confirmar:
+            # Pedir confirmación al usuario (askyesno devuelve True/False)
+            if messagebox.askyesno("Materia Existente", mensaje_confirmacion):
                 # El usuario confirmó la actualización
                 sql_update = """
                     UPDATE materias 
                     SET nombre = %s,
                         horas_semana = %s,
-                        semestre = %s
+                        semestre_id = %s
                     WHERE materia_id = %s
                 """
-                valores_update = (nombre, horas_semana, semestre, clave)
+                # Se utiliza el ID numérico del semestre o None
+                valores_update = (nombre, horas_semana_str, semestre_id, clave) 
                 
-                # Ejecución del UPDATE
                 cursor.execute(sql_update, valores_update)
-                messagebox.showinfo("Actualización Exitosa", f"actializasion completa")
+                messagebox.showinfo("Actualización Exitosa", f"Actualización completa.")
                 transaccion_exitosa = True
                 return True
             else:
                 # El usuario canceló la actualización
-                messagebox.showinfo("Actualización Cancelada", f"actualización cancelada")
+                messagebox.showinfo("Actualización Cancelada", f"Actualización cancelada.")
                 return True
 
         else:
-            # --- Caso: La materia NO existe (Alta nueva) ---
+            # --- Materia NO existe: Insertar nuevo registro ---
             sql_insert = """
-                INSERT INTO materias (materia_id, nombre, horas_semana, semestre) 
+                INSERT INTO materias (materia_id, nombre, horas_semana, semestre_id) 
                 VALUES (%s, %s, %s, %s)
             """
-            valores_insert = (clave, nombre, horas_semana, semestre)
+            # Se utiliza el ID numérico del semestre o None
+            valores_insert = (clave, nombre, horas_semana_str, semestre_id)
             
             cursor.execute(sql_insert, valores_insert)
             
-            messagebox.showinfo("Éxito", f"Materia con la clave '{clave}' (**{nombre}**) guardada correctamente.")
+            messagebox.showinfo("Éxito", f"Materia con la clave '{clave}' ({nombre}) guardada correctamente.")
             transaccion_exitosa = True
             return True
 
     except mysql.connector.Error as err:
+        # Manejo de errores de base de datos (ej. violación de FK, formato incorrecto)
         messagebox.showerror("Error de BD", f"Error al procesar los datos de la materia: {err}")
         return False
             
     finally:
+        # Asegurar el COMMIT si la operación fue exitosa
         if transaccion_exitosa and conexion is not None:
             conexion.commit()
             print("Transacción finalizada con COMMIT.")
         
+        # Cerrar recursos
         if cursor is not None:
             cursor.close()
         if conexion is not None and conexion.is_connected():
             conexion.close()
             print("Conexión cerrada.")
-
-# --- 2. CLASE DE DATOS (Interacción) ---
-
-class materia:
-    def __init__(self, clave, nombre, horas_semana, semestre):
-        self.clave = clave
-        self.nombre = nombre
-        self.horas_semana = horas_semana
-        self.semestre = semestre
-        
-        print(f"Datos de materia guardados en el objeto: {self.nombre}")
-        
-        self.procesar_datos()
-
-    def procesar_datos(self):
-        """
-        Función que transfiere los datos del objeto a la función de validación y registro.
-        """
-        print("Enviando datos a la función de validación...")
-        
-        exito = validar_y_registrar_materia(
-            self.clave, 
-            self.nombre, 
-            self.horas_semana, 
-            self.semestre
-        )
-        
-        if exito:
-            print("Registro/Actualización de materia completado con éxito.")
-        else:
-            print("Fallo en el registro/actualización de materia.")
-
-        return exito
