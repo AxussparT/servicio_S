@@ -102,8 +102,7 @@ class VentanaGestion:
         ttk.Label(self.frame_izq_gp,text="grupo",background='#0A0F1E',foreground='#ffffff', font=("Roboto", 10)).pack(pady=3,padx=10)
         
         # COMBO GRUPOS
-        # ESTADO NORMAL para permitir la entrada manual de nuevos grupos
-        self.combo_grupos=ttk.Combobox(self.frame_izq_gp,width=20,font=("Roboto", 15), state='normal') 
+        self.combo_grupos=ttk.Combobox(self.frame_izq_gp,width=20,font=("Roboto", 15), state='readonly') 
         self.combo_grupos.pack(pady=3,padx=10)
         
         boton_guardar2 = ttk.Button(self.frame_izq_gp, text="Empezar asignacion automatica")
@@ -126,7 +125,7 @@ class VentanaGestion:
         self.tabla_profesores.column('materia',anchor='w',width=120)
         
         self.tabla_profesores.heading('Profesor',text='Profesor')
-        self.tabla_profesores.heading('materia',text='materia (Grupo)')
+        self.tabla_profesores.heading('materia',text='materia')
         
         scrollbar_vertical=ttk.Scrollbar(self.frame_tablas,orient='vertical',command=self.tabla_profesores.yview)
         self.tabla_profesores.configure(yscroll=scrollbar_vertical.set)
@@ -139,15 +138,38 @@ class VentanaGestion:
         
         # Diccionarios para almacenar el mapeo de IDs y datos de la BD
         self.profesores_map = {} 
-        self.materias_map = {} 
+        self.materias_map = {} # {materia_id: semestre_id}
         self.grupos_map = {}
-        self.semestres_map = {}
+        self.semestres_map = {} # {str(id_semestre): 'ID - Nombre'}
+        self.grupos_por_semestre={
+            "1":["S1A","S1B","S1C","S1D","S1E","S1F"],
+            "2":["S2A","S2B","S2C","S2D","S2E","S2F"],
+            "3":["S3A","S3B","S3C","S3D","S3E"],
+            "4":["S4A","S4B","S4C","S4D","S4E"],
+            "5":["S5A","S5B","S5C","S5D","S5E"],
+            "6":["S6A","S6B","S6C","S6D"],
+            "7":["S7A","S7B","S7C","S7D"],
+            "8":["S8A","S8B","S8C"],
+            "9":["S9A","S9B","S9C"]
+        }
         
         # 4. Cargar datos iniciales y esperar cierre
         self.cargar_combos_bd() 
         self.ventana.wait_window() 
         
     # --- MÉTODOS DE LA CLASE ---
+    def cargar_grupos_por_semestre(self,semestre_id):
+        """cargar los grupos desde las listas fijas"""
+        semestre_id=str(semestre_id)
+        
+        grupos_disponibles=self.grupos_por_semestre.get(semestre_id,[])
+        
+        self.combo_grupos['values']=grupos_disponibles
+        if grupos_disponibles:
+            self.combo_grupos.set(grupos_disponibles[0])
+        else:
+            self.combo_grupos.set("")
+            self.combo_grupos.set("sin grupos cargados :(")
     
     def cargar_combos_bd(self):
         """Carga los datos de las tablas (profesores, materias, semestres, grupos) en los combos."""
@@ -197,7 +219,7 @@ class VentanaGestion:
                 combo_value = f"{materia_id} - {nombre_materia}"
                 materias_combo_data.append(combo_value)
                 
-                self.materias_map[str(materia_id)] = semestre_id 
+                self.materias_map[str(materia_id)] = semestre_id # Guardar materia_id como string para consistencia
                 
             self.combo_materias['values'] = materias_combo_data
             if materias_combo_data:
@@ -205,19 +227,13 @@ class VentanaGestion:
                 self.mostrar_semestre_de_materia() 
                 
             # --- GRUPOS ---
-            # Nota: Los grupos se cargan para que aparezcan en el desplegable
             sql_grupos = "SELECT grupo_id, nombre FROM grupos ORDER BY nombre"
             cursor.execute(sql_grupos)
-            grupos_data_raw = cursor.fetchall()
-            
-            # Almacenar en un mapa para referencia rápida y en la lista de valores del combo
-            self.grupos_map = {str(row[0]): f"{row[0]} - {row[1]}" for row in grupos_data_raw}
-            grupos_data = list(self.grupos_map.values())
-            
+            grupos_data = [f"{row[0]} - {row[1]}" for row in cursor.fetchall()]
             self.combo_grupos['values'] = grupos_data
             if grupos_data:
                 self.combo_grupos.set(grupos_data[0])
-            
+
             # Cargar la tabla inicial
             self.actualizar_vista_previa()
             
@@ -230,73 +246,14 @@ class VentanaGestion:
             if conexion is not None and conexion.is_connected():
                 conexion.close()
 
-    def obtener_o_crear_grupo(self, grupo_input_str):
-        """
-        Busca el ID de un grupo existente o lo inserta como nuevo grupo si no lo encuentra.
-        Si el grupo_input_str es simple (ej. "SA"), se usa ese valor como ID y Nombre.
-        Retorna el grupo_id (VARCHAR) o None si falla.
-        """
-        grupo_input_str = grupo_input_str.strip()
-        if not grupo_input_str:
-            messagebox.showerror("Error de Grupo", "El campo Grupo no puede estar vacío.")
-            return None
-        
-        conexion = None
-        cursor = None
-        
-        try:
-            conexion = get_conexion()
-            if conexion is None:
-                return None
-            cursor = conexion.cursor()
-
-            # 1. Intentar extraer ID si el formato es 'ID - Nombre' (grupo ya cargado)
-            if ' - ' in grupo_input_str:
-                grupo_id_check = grupo_input_str.split(' - ')[0]
-                # Verificamos que este ID exista en la base de datos
-                sql_check = "SELECT grupo_id FROM grupos WHERE grupo_id = %s"
-                cursor.execute(sql_check, (grupo_id_check,))
-                if cursor.fetchone():
-                    return grupo_id_check # Grupo existente seleccionado del combo
-            
-            # 2. Usar la entrada simple como ID y Nombre
-            grupo_simple = grupo_input_str.upper() # Usamos mayúsculas como convención para IDs simples
-            
-            # Buscar por ID (en caso de que el usuario haya escrito un ID existente)
-            sql_check_id = "SELECT grupo_id FROM grupos WHERE grupo_id = %s"
-            cursor.execute(sql_check_id, (grupo_simple,))
-            if cursor.fetchone():
-                return grupo_simple # Ya existe con ese ID/nombre simple, usar ese.
-
-            # 3. Insertar como nuevo grupo (ID = Nombre = entrada simple)
-            sql_insert = "INSERT INTO grupos (grupo_id, nombre) VALUES (%s, %s)"
-            cursor.execute(sql_insert, (grupo_simple, grupo_simple))
-            conexion.commit()
-            
-            # Recargar los combos para que el nuevo grupo esté disponible inmediatamente
-            self.cargar_combos_bd() 
-            messagebox.showinfo("Nuevo Grupo Creado", f"El grupo '{grupo_simple}' ha sido registrado y utilizado en la asignación.")
-            
-            return grupo_simple
-
-        except mysql.connector.Error as err:
-            conexion.rollback()
-            messagebox.showerror("Error de BD", f"Error al gestionar el grupo: {err}")
-            return None
-        except Exception as e:
-            messagebox.showerror("Error", f"Ocurrió un error inesperado al procesar el grupo: {e}")
-            return None
-        finally:
-            if cursor is not None:
-                cursor.close()
-            if conexion is not None and conexion.is_connected():
-                conexion.close()
-
     def mostrar_semestre_de_materia(self, event=None):
         """Detecta la materia seleccionada y actualiza el combobox de semestre automáticamente."""
         selected_materia_str = self.combo_materias.get()
         if not selected_materia_str:
-            self.combo_semestre.set("") 
+            self.combo_semestre.set("")
+            self.combo_grupos.set("")
+            self.combo_grupos['values']=[]
+            
             return
             
         try:
@@ -308,6 +265,8 @@ class VentanaGestion:
                 
                 if semestre_display_value:
                     self.combo_semestre.set(semestre_display_value)
+                    
+                    self.cargar_grupos_por_semestre(semestre_id)
                 else:
                     self.combo_semestre.set("Error: Semestre desconocido")
             else:
@@ -318,25 +277,18 @@ class VentanaGestion:
             self.combo_semestre.set("")
 
     def asignar_profesor_materia(self):
-        """Guarda la asignación de Profesor, Materia y GRUPO en la tabla 'asignaciones'."""
+        """Guarda la asignación Profesor-Materia en la tabla 'asignaciones' de la BD."""
         
         profesor_str = self.combo_profesores.get()
         materia_str = self.combo_materias.get()
-        grupo_str = self.combo_grupos.get() 
         
         try:
-            # Obtener solo los ID de Profesor y Materia
+            # Obtiene solo el ID
             profesor_id = profesor_str.split(' - ')[0]
             materia_id = materia_str.split(' - ')[0]
         except IndexError:
             messagebox.showerror("Error de Selección", "Debe seleccionar un Profesor y una Materia válidos.")
             return
-        
-        # Obtener o crear el ID del grupo
-        grupo_id = self.obtener_o_crear_grupo(grupo_str)
-        if grupo_id is None:
-            # Si la función anterior falló o el campo estaba vacío, se detiene aquí.
-            return 
 
         conexion = None
         cursor = None
@@ -349,21 +301,21 @@ class VentanaGestion:
 
             cursor = conexion.cursor()
             
-            # 1. Verificar si la asignación ya existe (usando Profesor, Materia, Y GRUPO)
-            sql_check = "SELECT COUNT(*) FROM asignaciones WHERE profesor_id = %s AND materia_id = %s AND grupo_id = %s"
-            cursor.execute(sql_check, (profesor_id, materia_id, grupo_id))
+            # 1. Verificar si la asignación ya existe para evitar duplicados
+            sql_check = "SELECT COUNT(*) FROM asignaciones WHERE profesor_id = %s AND materia_id = %s"
+            cursor.execute(sql_check, (profesor_id, materia_id))
             if cursor.fetchone()[0] > 0:
                 messagebox.showwarning("Asignación Existente", 
-                                       f"Esta asignación (Profesor {profesor_id}, Materia {materia_id}, Grupo {grupo_id}) ya existe.")
+                                       f"El Profesor {profesor_id} ya está asignado a la Materia {materia_id}.")
                 return
             
-            # 2. Insertar la nueva asignación (incluyendo grupo_id)
-            sql_insert = "INSERT INTO asignaciones (profesor_id, materia_id, grupo_id) VALUES (%s, %s, %s)"
-            cursor.execute(sql_insert, (profesor_id, materia_id, grupo_id))
+            # 2. Insertar la nueva asignación
+            sql_insert = "INSERT INTO asignaciones (profesor_id, materia_id) VALUES (%s, %s)"
+            cursor.execute(sql_insert, (profesor_id, materia_id))
             conexion.commit()
             
             messagebox.showinfo("Éxito", 
-                                 f"Asignación guardada: Profesor {profesor_id} a Materia {materia_id} para el Grupo {grupo_id}.")
+                                 f"Asignación guardada: Profesor {profesor_id} asignado a Materia {materia_id}.")
             
             # 3. Actualizar la vista previa 
             self.actualizar_vista_previa()
@@ -371,8 +323,9 @@ class VentanaGestion:
         except mysql.connector.Error as err:
             if conexion and conexion.is_connected():
                    conexion.rollback()
+            # Muestra un error si falla la inserción (ej. por claves foráneas inexistentes)
             messagebox.showerror("Error de BD", 
-                                 f"Error al intentar asignar: {err}\nVerifique si las claves foráneas existen.")
+                                 f"Error al intentar asignar: {err}\nVerifique si las claves existen.")
             
         finally:
             if cursor is not None:
@@ -382,34 +335,22 @@ class VentanaGestion:
 
     
     def actualizar_vista_previa(self, event=None):
-        """Consulta la BD para obtener las asignaciones y actualiza la tabla de vista previa."""
+        """Consulta la BD para obtener las asignaciones y actualiza la tabla (Treeview) de vista previa, 
+        filtrando por el profesor o materia seleccionada."""
         
         profesor_str = self.combo_profesores.get()
         materia_str = self.combo_materias.get()
-        grupo_str = self.combo_grupos.get() 
         
         try:
             profesor_id = profesor_str.split(' - ')[0] if profesor_str and ' - ' in profesor_str else None
             materia_id = materia_str.split(' - ')[0] if materia_str and ' - ' in materia_str else None
-            
-            # Si el grupo no está en formato 'ID - Nombre', se usa el valor directo como ID para filtrar.
-            if grupo_str and ' - ' in grupo_str:
-                 grupo_id = grupo_str.split(' - ')[0]
-            elif grupo_str:
-                 grupo_id = grupo_str.upper()
-            else:
-                 grupo_id = None
-                 
         except:
             profesor_id = None
             materia_id = None
-            grupo_id = None
         
+        # Limpiar tabla antes de la consulta
         for item in self.tabla_profesores.get_children():
             self.tabla_profesores.delete(item)
-        
-        if not profesor_id and not materia_id and not grupo_id:
-             return
 
         conexion = None
         cursor = None
@@ -421,17 +362,15 @@ class VentanaGestion:
 
             cursor = conexion.cursor()
             
-            # Construir la consulta SQL (incluye JOIN con la tabla grupos)
+            # Construir la consulta SQL dinámica
             sql = """
                 SELECT 
                     a.profesor_id, p.nombre AS nombre_profesor, 
-                    a.materia_id, m.nombre AS nombre_materia,
-                    a.grupo_id, g.nombre AS nombre_grupo
+                    a.materia_id, m.nombre AS nombre_materia
                 FROM 
                     asignaciones a
                 JOIN profesores p ON a.profesor_id = p.profesor_id
                 JOIN materias m ON a.materia_id = m.materia_id
-                JOIN grupos g ON a.grupo_id = g.grupo_id 
                 WHERE 1=1 
             """
             params = []
@@ -443,10 +382,6 @@ class VentanaGestion:
             if materia_id:
                 sql += " AND a.materia_id = %s"
                 params.append(materia_id)
-            
-            if grupo_id: 
-                sql += " AND a.grupo_id = %s"
-                params.append(grupo_id)
                 
             sql += " LIMIT 50" 
             
@@ -456,10 +391,8 @@ class VentanaGestion:
             # Insertar resultados en la Treeview
             if resultados:
                 for row in resultados:
-                    # row[0]=prof_id, row[1]=prof_nombre, row[2]=materia_id, row[3]=materia_nombre, row[4]=grupo_id, row[5]=grupo_nombre
                     profesor_display = f"{row[0]} - {row[1]}"
-                    # Muestra la materia y el grupo en la misma columna
-                    materia_display = f"{row[2]} - {row[3]} ({row[5]})" 
+                    materia_display = f"{row[2]} - {row[3]}"
                     self.tabla_profesores.insert('', 'end', values=(profesor_display, materia_display))
             else:
                 self.tabla_profesores.insert('', 'end', values=("(No hay asignaciones para la selección)", ""))
@@ -476,7 +409,7 @@ class VentanaGestion:
                 conexion.close()
     
     def redimensionar_fondo(self, event):
-        """Redimensiona la imagen de fondo al tamaño de la ventana."""
+        """Redimensiona la imagen de fondo al tamaño de la ventana (para mantener el aspecto visual)."""
         try:
             new_ancho = event.width
             new_alto = event.height
