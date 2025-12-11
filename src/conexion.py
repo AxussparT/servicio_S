@@ -4,7 +4,6 @@ from tkinter import messagebox
 def get_conexion():
     try:
         conexion = mysql.connector.connect(
-            host="localhost",
             user="root",
             password="YOLOyolo89",
             database="Escuela",

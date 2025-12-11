@@ -378,6 +378,10 @@ class VentanaPrincipal:
                 semestre=semestre,
                 #salon=salon
             )
+            self.entry_materia_clave.delete(0, 'end')
+            self.entry_materia_horas.delete(0, 'end')
+            self.entry_materia_nom.delete(0, 'end')
+            self.entry_materia_semestre.delete(0, 'end')
         except NameError:
             print("ERROR: La clase 'profesor' no está definida o no ha sido importada.")
 

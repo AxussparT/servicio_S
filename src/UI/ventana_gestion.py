@@ -430,8 +430,8 @@ class VentanaGestion:
 
     def asignar_profesor_materia(self):
         """
-        Guarda la asignación de Profesor, Materia y GRUPO,
-        incluyendo los datos de disponibilidad, horas y periodo.
+        Guarda la asignación de Profesor, Materia y GRUPO.
+        Incluye validación para evitar que la misma Materia se asigne dos veces al mismo Grupo.
         """
         # 🚨 SOLUCIÓN ERROR TCL: Verificar que la ventana exista antes de continuar
         if not self.ventana.winfo_exists():
@@ -469,23 +469,35 @@ class VentanaGestion:
 
             cursor = conexion.cursor()
             
-            # 3. Validación CLAVE: Verificar si la Materia ya está asignada al GRUPO
+            # 3. VALIDACIÓN CLAVE: Verificar si la Materia ya está asignada al GRUPO
             sql_check_grupo_materia = "SELECT profesor_id FROM asignaciones WHERE materia_id = %s AND grupo_id = %s"
             cursor.execute(sql_check_grupo_materia, (materia_id, grupo_id))
+            
+            # Guardamos el resultado ANTES de cerrar el cursor para otra consulta
             asignacion_existente = cursor.fetchone()
             
             if asignacion_existente:
                 profesor_existente_id = asignacion_existente[0]
                 
+                # Cerrar el cursor actual y abrir uno nuevo para obtener el nombre del profesor
+                cursor.close() 
+                cursor = conexion.cursor() 
+                
                 sql_prof_nombre = "SELECT nombre FROM profesores WHERE profesor_id = %s"
                 cursor.execute(sql_prof_nombre, (profesor_existente_id,))
-                nombre_prof_existente = cursor.fetchone()[0] if cursor.fetchone() else profesor_existente_id
+                
+                nombre_prof_existente_res = cursor.fetchone()
+                nombre_prof_existente = nombre_prof_existente_res[0] if nombre_prof_existente_res else profesor_existente_id
 
                 messagebox.showwarning("Asignación Duplicada", 
                                        f"La Materia **{materia_id}** ya está asignada al Grupo **{grupo_id}** "
                                        f"por el Profesor **{nombre_prof_existente}**. No se puede asignar a otro profesor.")
                 return
             
+            # Si llegamos aquí sin duplicados, aseguramos que el cursor esté abierto para la inserción
+            if cursor is None or cursor.closed:
+                 cursor = conexion.cursor()
+
             # 4. Insertar la nueva asignación con todos los nuevos campos
             sql_insert = """
                 INSERT INTO asignaciones (
